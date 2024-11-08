@@ -1309,61 +1309,27 @@ public final class RobotPeer implements IRobotPeerBattle, IRobotPeer {
 	private void updateHeading() {
 		boolean normalizeHeading = true;
 
-		double turnRate = min(currentCommands.getMaxTurnRate(),
-				(.4 + .6 * (1 - (abs(velocity) / Rules.MAX_VELOCITY))) * Rules.MAX_TURN_RATE_RADIANS);
+		double turnRate = Math.min(currentCommands.getMaxTurnRate(),
+				(.4 + .6 * (1 - (Math.abs(velocity) / Rules.MAX_VELOCITY))) * Rules.MAX_TURN_RATE_RADIANS);
 
 		if (currentCommands.getBodyTurnRemaining() > 0) {
+			double turnAmount = turnRate;
 			if (currentCommands.getBodyTurnRemaining() < turnRate) {
-				bodyHeading += currentCommands.getBodyTurnRemaining();
-				gunHeading += currentCommands.getBodyTurnRemaining();
-				radarHeading += currentCommands.getBodyTurnRemaining();
-				if (currentCommands.isAdjustGunForBodyTurn()) {
-					currentCommands.setGunTurnRemaining(
-							currentCommands.getGunTurnRemaining() - currentCommands.getBodyTurnRemaining());
-				}
-				if (currentCommands.isAdjustRadarForBodyTurn()) {
-					currentCommands.setRadarTurnRemaining(
-							currentCommands.getRadarTurnRemaining() - currentCommands.getBodyTurnRemaining());
-				}
+				turnAmount = currentCommands.getBodyTurnRemaining();
 				currentCommands.setBodyTurnRemaining(0);
 			} else {
-				bodyHeading += turnRate;
-				gunHeading += turnRate;
-				radarHeading += turnRate;
 				currentCommands.setBodyTurnRemaining(currentCommands.getBodyTurnRemaining() - turnRate);
-				if (currentCommands.isAdjustGunForBodyTurn()) {
-					currentCommands.setGunTurnRemaining(currentCommands.getGunTurnRemaining() - turnRate);
-				}
-				if (currentCommands.isAdjustRadarForBodyTurn()) {
-					currentCommands.setRadarTurnRemaining(currentCommands.getRadarTurnRemaining() - turnRate);
-				}
 			}
+			adjustHeadings(turnAmount);
 		} else if (currentCommands.getBodyTurnRemaining() < 0) {
+			double turnAmount = -turnRate;
 			if (currentCommands.getBodyTurnRemaining() > -turnRate) {
-				bodyHeading += currentCommands.getBodyTurnRemaining();
-				gunHeading += currentCommands.getBodyTurnRemaining();
-				radarHeading += currentCommands.getBodyTurnRemaining();
-				if (currentCommands.isAdjustGunForBodyTurn()) {
-					currentCommands.setGunTurnRemaining(
-							currentCommands.getGunTurnRemaining() - currentCommands.getBodyTurnRemaining());
-				}
-				if (currentCommands.isAdjustRadarForBodyTurn()) {
-					currentCommands.setRadarTurnRemaining(
-							currentCommands.getRadarTurnRemaining() - currentCommands.getBodyTurnRemaining());
-				}
+				turnAmount = currentCommands.getBodyTurnRemaining();
 				currentCommands.setBodyTurnRemaining(0);
 			} else {
-				bodyHeading -= turnRate;
-				gunHeading -= turnRate;
-				radarHeading -= turnRate;
 				currentCommands.setBodyTurnRemaining(currentCommands.getBodyTurnRemaining() + turnRate);
-				if (currentCommands.isAdjustGunForBodyTurn()) {
-					currentCommands.setGunTurnRemaining(currentCommands.getGunTurnRemaining() + turnRate);
-				}
-				if (currentCommands.isAdjustRadarForBodyTurn()) {
-					currentCommands.setRadarTurnRemaining(currentCommands.getRadarTurnRemaining() + turnRate);
-				}
 			}
+			adjustHeadings(turnAmount);
 		} else {
 			normalizeHeading = false;
 		}
@@ -1375,8 +1341,22 @@ public final class RobotPeer implements IRobotPeerBattle, IRobotPeer {
 				bodyHeading = normalAbsoluteAngle(bodyHeading);
 			}
 		}
+
 		if (Double.isNaN(bodyHeading)) {
 			Logger.realErr.println("HOW IS HEADING NAN HERE");
+		}
+	}
+
+	private void adjustHeadings(double turnAmount) {
+		bodyHeading += turnAmount;
+		gunHeading += turnAmount;
+		radarHeading += turnAmount;
+
+		if (currentCommands.isAdjustGunForBodyTurn()) {
+			currentCommands.setGunTurnRemaining(currentCommands.getGunTurnRemaining() - turnAmount);
+		}
+		if (currentCommands.isAdjustRadarForBodyTurn()) {
+			currentCommands.setRadarTurnRemaining(currentCommands.getRadarTurnRemaining() - turnAmount);
 		}
 	}
 
